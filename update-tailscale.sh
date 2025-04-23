@@ -13,7 +13,7 @@
 SCRIPT_VERSION="2025.02.16.01"
 SCRIPT_NAME="update-tailscale.sh"
 UPDATE_URL="https://raw.githubusercontent.com/Admonstrator/glinet-tailscale-updater/main/update-tailscale.sh"
-TAILSCALE_TINY_URL="https://github.com/Admonstrator/glinet-tailscale-updater/releases/latest/download/"
+TAILSCALE_TINY_URL=" https://github.com/tailscale/tailscale/releases/tag/v1.78.1"
 #
 # Usage: ./update-tailscale.sh [--ignore-free-space] [--force] [--restore] [--no-upx] [--no-download] [--no-tiny] [--help]
 # Warning: This script might potentially harm your router. Use it at your own risk.
@@ -163,7 +163,7 @@ get_latest_tailscale_version() {
     if [ "$NO_DOWNLOAD" -eq 1 ]; then
         log "INFO" "--no-download flag is used. Skipping download of tailscale"
         log "INFO" "Please download the tailscale archive manually and place it in /tmp/tailscale.tar.gz"
-        TAILSCALE_VERSION_NEW="manually"
+        TAILSCALE_VERSION_NEW="1.78.0"
     else
         log "INFO" "Detecting latest tailscale version"
         if [ "$ARCH" = "aarch64" ]; then
@@ -184,7 +184,7 @@ get_latest_tailscale_version() {
         fi
         log "INFO" "The latest tailscale version is: $TAILSCALE_VERSION_NEW"
         log "INFO" "Downloading latest tailscale version"
-        curl -L -s --output /tmp/tailscale.tar.gz "https://pkgs.tailscale.com/stable/$TAILSCALE_VERSION_NEW"
+        curl -L -s --output /tmp/tailscale.tar.gz "https://pkgs.tailscale.com/stable/?v=1.78.1"
         # Check if download was successful
     fi
     if [ ! -f "/tmp/tailscale.tar.gz" ]; then
