@@ -43,7 +43,7 @@ invoke_intro() {
     echo "│ WARNING: THIS SCRIPT MIGHT POTENTIALLY HARM YOUR ROUTER!                │"
     echo "│ It's only recommended to use this script if you know what you're doing.│"
     echo "├────────────────────────────────────────────────────────────────────────┤"
-    echo "│ This script will install Tailscale version <span class="math-inline">SPECIFIC\_VERSION on your router\. │"
+    echo "│ This script will install Tailscale version <span class="math-inline">SPECIFIC\_VERSION <0\>on your router\. │"
 echo "│                                                                        │"
 echo "│ Prerequisites\:                                                         │"
 echo "│ 1\. At least 15 MB of free space\.                                       │"
@@ -72,7 +72,7 @@ if \[ "</span>{FIRMWARE_VERSION}" -lt 4 ]; then
         TINY_ARCH="arm"
         log "SUCCESS" "Architecture: armv7"
     elif [ "<span class="math-inline">ARCH" \= "mips" \]; then
-\# Check for specific models that use mipsle architecture
+\# Check</0\> for specific models that use mipsle architecture
 MODEL\=</span>(grep 'machine' /proc/cpuinfo | awk -F ': ' '{print $2}')
     case "$MODEL" in
         "GL.iNet GL-MT1300" | "GL-MT300N-V2" | "GL-SFT1200")
@@ -172,7 +172,7 @@ filename\="tailscale\_</span>{SPECIFIC_VERSION}_mips.tgz"
             exit 1
         fi
         log "SUCCESS" "Successfully downloaded tailscale version <span class="math-inline">SPECIFIC\_VERSION"
-fi
+<0\>fi
 log "INFO" "Finding tailscale binaries in archive"
 TAILSCALE\_SUBDIR\_IN\_TAR\=</span>(tar tzf /tmp/tailscale.tar.gz | grep /$ | head -n 1)
     TAILSCALE_SUBDIR_IN_TAR=${TAILSCALE_SUBDIR_IN_TAR%/}
@@ -232,7 +232,7 @@ upx\_version\="</span>(
     elif [ "$ARCH" = "mips" ]; then
         UPX_ARCH="<span class="math-inline">ARCH"
 fi
-curl \-L \-s \-\-output "/tmp/upx\.tar\.xz" \\
+curl \-L \-s \-\-output "/tmp/upx\.tar\.xz"</0\> \\
 "https\://github\.com/upx/upx/releases/download/v</span>{upx_version}/upx-<span class="math-inline">\{upx\_version\}\-</span>{UPX_ARCH}_linux.tar.xz"
 
     # If download fails, skip compression
