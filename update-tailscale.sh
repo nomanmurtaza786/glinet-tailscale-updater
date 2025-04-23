@@ -34,6 +34,10 @@ INFO='\033[0m' # No Color
 
 # Functions
 invoke_intro() {
+    echo -e "\033[1mUsage:\033[0m \033[92m./update-tailscale.sh\033[0m [\033[93m--version VERSION\033[0m] [\033[93m--ignore-free-space\033[0m] [\033[93m--force\033[0m] [\033[93m--restore\033[0m] [\033[93m--no-upx\033[0m] [\033[93m--help\033[0m]"
+    echo -e "\033[1mOptions:\033[0m"
+    echo -e "  \033[93m--version VERSION\033[0m     \033[97mInstall specific version (e.g., 1.50.1)\033[0m"
+    echo -e "  \033[93m--ignore-free-space\033[0m  \033[97mIgnore free space check\033[0m"
     echo "┌────────────────────────────────────────────────────────────────────────┐"
     echo "│ GL.iNet router script by Admon 🦭 for the GL.iNet community            │"
     echo "| Version: $SCRIPT_VERSION                                                 |"
