@@ -29,15 +29,10 @@ NO_TINY=0
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-SPECIFIC_VERSION=""  # Add this new variable
 INFO='\033[0m' # No Color
 
 # Functions
 invoke_intro() {
-    echo -e "\033[1mUsage:\033[0m \033[92m./update-tailscale.sh\033[0m [\033[93m--version VERSION\033[0m] [\033[93m--ignore-free-space\033[0m] [\033[93m--force\033[0m] [\033[93m--restore\033[0m] [\033[93m--no-upx\033[0m] [\033[93m--help\033[0m]"
-    echo -e "\033[1mOptions:\033[0m"
-    echo -e "  \033[93m--version VERSION\033[0m     \033[97mInstall specific version (e.g., 1.50.1)\033[0m"
-    echo -e "  \033[93m--ignore-free-space\033[0m  \033[97mIgnore free space check\033[0m"
     echo "┌────────────────────────────────────────────────────────────────────────┐"
     echo "│ GL.iNet router script by Admon 🦭 for the GL.iNet community            │"
     echo "| Version: $SCRIPT_VERSION                                                 |"
@@ -131,29 +126,30 @@ backup() {
 }
 
 get_latest_tailscale_version_tiny() {
-    if [ -n "$SPECIFIC_VERSION" ]; then
-        TAILSCALE_VERSION_NEW="$SPECIFIC_VERSION"
-        log "INFO" "Using specified version: $TAILSCALE_VERSION_NEW"
-    else
-        log "INFO" "Detecting latest tiny tailscale version"
-        TAILSCALE_VERSION_NEW=$(curl -L -s $TAILSCALE_TINY_URL/version.txt | grep -o '[0-9]*\.[0-9]*\.[0-9]')
-        if [ -z "$TAILSCALE_VERSION_NEW" ]; then
-            log "ERROR" "Could not get tailscale version. Please check your internet connection."
-            exit 1
-        fi
+    # Will attempt to download the latest version of tailscale from the updater repository
+    # This is the default behavior
+    log "INFO" "Detecting latest tiny tailscale version"
+    TAILSCALE_VERSION_NEW=1.78.0
+    if [ -z "$TAILSCALE_VERSION_NEW" ]; then
+        log "ERROR" "Could not get latest tailscale version. Please check your internet connection."
+        exit 1
     fi
-
+    log "INFO" "The latest tailscale version is: $TAILSCALE_VERSION_NEW"
     TAILSCALE_VERSION_OLD="$(tailscale --version | head -1)"
     if [ "$TAILSCALE_VERSION_NEW" == "$TAILSCALE_VERSION_OLD" ]; then
-        log "SUCCESS" "Version $TAILSCALE_VERSION_NEW is already installed"
+        log "SUCCESS" "You already have the latest version."
+        log "INFO" "If you encounter issues while using the tiny version, please use the normal version."
+        log "INFO" "You can do this by using the --no-tiny flag."
+        log "INFO" "Make sure to have enough space available. The normal version needs at least 50 MB."
+        log "INFO" "This issue is because not every release will be published in the official repository."
         exit 0
     fi
-
-    log "INFO" "Downloading tailscale version: $TAILSCALE_VERSION_NEW"
-    curl -L -s --output /tmp/tailscaled-linux-$TINY_ARCH "$TAILSCALE_TINY_URL/tailscaled-linux-$TINY_ARCH-$TAILSCALE_VERSION_NEW"
-    
+    log "INFO" "The latest tailscale version is: $TAILSCALE_VERSION_NEW"
+    log "INFO" "Downloading latest tailscale version"
+    curl -L -s --output /tmp/tailscaled-linux-$TINY_ARCH "$TAILSCALE_TINY_URL/tailscaled-linux-$TINY_ARCH"
+    # Check if download was successful
     if [ ! -f "/tmp/tailscaled-linux-$TINY_ARCH" ]; then
-        log "ERROR" "Could not download tailscale version $TAILSCALE_VERSION_NEW"
+        log "ERROR" "Could not download tailscale. Exiting"
         log "ERROR" "File not found: /tmp/tailscaled-linux-$TINY_ARCH"
         exit 1
     fi
@@ -164,72 +160,65 @@ get_latest_tailscale_version() {
         rm -rf /tmp/tailscale
     fi
     mkdir /tmp/tailscale
-
     if [ "$NO_DOWNLOAD" -eq 1 ]; then
         log "INFO" "--no-download flag is used. Skipping download of tailscale"
         log "INFO" "Please download the tailscale archive manually and place it in /tmp/tailscale.tar.gz"
         TAILSCALE_VERSION_NEW="manually"
     else
-        if [ -n "$SPECIFIC_VERSION" ]; then
-            if [ "$ARCH" = "aarch64" ]; then
-                TAILSCALE_VERSION_NEW="tailscale_${SPECIFIC_VERSION}_arm64.tgz"
-            elif [ "$ARCH" = "armv7l" ]; then
-                TAILSCALE_VERSION_NEW="tailscale_${SPECIFIC_VERSION}_arm.tgz"
-            elif [ "$ARCH" = "mips" ]; then
-                TAILSCALE_VERSION_NEW="tailscale_${SPECIFIC_VERSION}_mips.tgz"
-            fi
-            log "INFO" "Using specified version: $SPECIFIC_VERSION"
-        else
-            log "INFO" "Detecting latest tailscale version"
-            if [ "$ARCH" = "aarch64" ]; then
-                TAILSCALE_VERSION_NEW=$(curl -s https://pkgs.tailscale.com/stable/ | grep -o 'tailscale_[0-9]*\.[0-9]*\.[0-9]*_arm64\.tgz' | head -n 1)
-            elif [ "$ARCH" = "armv7l" ]; then
-                TAILSCALE_VERSION_NEW=$(curl -s https://pkgs.tailscale.com/stable/ | grep -o 'tailscale_[0-9]*\.[0-9]*\.[0-9]*_arm\.tgz' | head -n 1)
-            elif [ "$ARCH" = "mips" ]; then
-                TAILSCALE_VERSION_NEW=$(curl -s https://pkgs.tailscale.com/stable/ | grep -o 'tailscale_[0-9]*\.[0-9]*\.[0-9]*_mips\.tgz' | head -n 1)
-            fi
+        log "INFO" "Detecting latest tailscale version"
+        if [ "$ARCH" = "aarch64" ]; then
+            TAILSCALE_VERSION_NEW=$(curl -s https://pkgs.tailscale.com/stable/ | grep -o 'tailscale_[0-9]*\.[0-9]*\.[0-9]*_arm64\.tgz' | head -n 1)
+        elif [ "$ARCH" = "armv7l" ]; then
+            TAILSCALE_VERSION_NEW=$(curl -s https://pkgs.tailscale.com/stable/ | grep -o 'tailscale_[0-9]*\.[0-9]*\.[0-9]*_arm\.tgz' | head -n 1)
+        elif [ "$ARCH" = "mips" ]; then
+            TAILSCALE_VERSION_NEW=$(curl -s https://pkgs.tailscale.com/stable/ | grep -o 'tailscale_[0-9]*\.[0-9]*\.[0-9]*_mips\.tgz' | head -n 1)
         fi
-
         if [ -z "$TAILSCALE_VERSION_NEW" ]; then
-            log "ERROR" "Could not get tailscale version. Please check your internet connection."
+            log "ERROR" "Could not get latest tailscale version. Please check your internet connection."
             exit 1
         fi
-
-        log "INFO" "Downloading tailscale version: $TAILSCALE_VERSION_NEW"
+        TAILSCALE_VERSION_OLD="$(tailscale --version | head -1)"
+        if [ "$TAILSCALE_VERSION_NEW" == "$TAILSCALE_VERSION_OLD" ]; then
+            log "SUCCESS" "You already have the latest version."
+            exit 0
+        fi
+        log "INFO" "The latest tailscale version is: $TAILSCALE_VERSION_NEW"
+        log "INFO" "Downloading latest tailscale version"
         curl -L -s --output /tmp/tailscale.tar.gz "https://pkgs.tailscale.com/stable/$TAILSCALE_VERSION_NEW"
-        
-        if [ ! -f "/tmp/tailscale.tar.gz" ]; then
-            log "ERROR" "Could not download tailscale. Exiting"
-            log "ERROR" "File not found: /tmp/tailscale.tar.gz"
-            exit 1
-        fi
+        # Check if download was successful
+    fi
+    if [ ! -f "/tmp/tailscale.tar.gz" ]; then
+        log "ERROR" "Could not download tailscale. Exiting"
+        log "ERROR" "File not found: /tmp/tailscale.tar.gz"
+        exit 1
     fi
 
     log "INFO" "Finding tailscale binaries in archive"
     TAILSCALE_SUBDIR_IN_TAR=$(tar tzf /tmp/tailscale.tar.gz | grep /$ | head -n 1)
     TAILSCALE_SUBDIR_IN_TAR=${TAILSCALE_SUBDIR_IN_TAR%/}
-    
     if [ -z "$TAILSCALE_SUBDIR_IN_TAR" ]; then
-        log "ERROR" "Could not find tailscale binaries in archive"
+        log "ERROR" "Could not find tailscale binaries in archive. Exiting"
         exit 1
     fi
-    
     log "SUCCESS" "Found tailscale binaries in: $TAILSCALE_SUBDIR_IN_TAR"
-
     # Ask if the user wants to compress the binaries with UPX to save space
     if [ "$NO_UPX" -eq 1 ]; then
+        log "WARNING" "--no-upx flag is used. Skipping compression"
         answer_compress_binaries="n"
     elif [ "$FORCE" -eq 1 ]; then
+        log "WARNING" "--force flag is used. Continuing with upx compression"
         answer_compress_binaries="y"
     else
         echo -e -n "> \033[36mDo you want to compress the binaries with UPX to save space?\033[0m (y/N) " && read -r answer_compress_binaries
     fi
-
     # Extract tailscale
+
     if [ "$answer_compress_binaries" != "${answer_compress_binaries#[Yy]}" ]; then
-        log "INFO" "Extracting tailscale and compressing with UPX"
-        tar xzf /tmp/tailscale.tar.gz -C /tmp/tailscale
         compress_binaries
+        if [ "$UPX_ERROR" -eq 1 ]; then
+            log "ERROR" "Could not compress tailscale with UPX. Continuing without compression"
+            tar xzf /tmp/tailscale.tar.gz -C /tmp/tailscale
+        fi
     else
         log "INFO" "Extracting tailscale without compression"
         tar xzf /tmp/tailscale.tar.gz -C /tmp/tailscale
@@ -537,20 +526,21 @@ for arg in "$@"; do
     --force)
         FORCE=1
         ;;
-    --version=*)
-        SPECIFIC_VERSION="${arg#*=}"
+    --ignore-free-space)
+        IGNORE_FREE_SPACE=1
         ;;
-    --version)
-        shift
-        if [ -n "$1" ]; then
-            SPECIFIC_VERSION="$1"
-            shift
-        else
-            log "ERROR" "--version requires a version number"
-            exit 1
-        fi
+    --restore)
+        RESTORE=1
         ;;
-    # ...existing arguments...
+    --no-upx)
+        NO_UPX=1
+        ;;
+    --no-download)
+        NO_DOWNLOAD=1
+        ;;
+    --no-tiny)
+        NO_TINY=1
+        ;;
     *)
         echo "Unknown argument: $arg"
         invoke_help
